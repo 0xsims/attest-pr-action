@@ -1,0 +1,40 @@
+name: 'Rubric Attest PR'
+description: 'Seal AI-authored pull requests with a post-quantum attestation record anchored to Hedera'
+branding:
+  icon: 'shield'
+  color: 'purple'
+inputs:
+  rubric-api-key:
+    description: 'Rubric API key (store as repo secret)'
+    required: true
+  rubric-endpoint:
+    description: 'Rubric verify endpoint base'
+    required: false
+    default: 'https://rubric-protocol.com/verify'
+  agent-name:
+    description: 'Identity of the AI agent that authored the PR'
+    required: true
+  agent-model:
+    description: 'Model identifier (e.g. claude-sonnet-4-6)'
+    required: false
+    default: 'unspecified'
+  github-token:
+    description: 'Token for posting the PR comment'
+    required: true
+outputs:
+  attestation-id:
+    description: 'Rubric attestation ID for the sealed PR record'
+    value: ${{ steps.attest.outputs.attestation_id }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Attest PR
+      id: attest
+      shell: bash
+      env:
+        RUBRIC_API_KEY: ${{ inputs.rubric-api-key }}
+        RUBRIC_ENDPOINT: ${{ inputs.rubric-endpoint }}
+        AGENT_NAME: ${{ inputs.agent-name }}
+        AGENT_MODEL: ${{ inputs.agent-model }}
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: ${{ github.action_path }}/attest-pr.sh

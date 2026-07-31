@@ -1,0 +1,22 @@
+name: Attest AI PRs
+on:
+  pull_request:
+    types: [opened, synchronize]
+jobs:
+  attest:
+    # gate on the bot/agent actors you use
+    if: contains(fromJSON('["dependabot[bot]","claude-code[bot]","devin[bot]"]'), github.actor) || contains(github.event.pull_request.labels.*.name, 'ai-authored')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: rubric-protocol/attest-pr-action@v1
+        with:
+          rubric-api-key: ${{ secrets.RUBRIC_API_KEY }}
+          agent-name: ${{ github.actor }}
+          agent-model: 'claude-sonnet-4-6'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
