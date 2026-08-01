@@ -14,3 +14,6 @@ Every AI-authored pull request in your repo carries a sealed, independently veri
 3. Add the workflow (see `.github/workflows/example.yml`)
 
 Free tier covers ~30 AI PRs/day. Standard tier for fleets.
+
+## Behavior on quota exhaustion
+If your key's monthly quota is exhausted, the Action logs a warning and exits cleanly — it will never fail your PR checks over a quota wall. Attestation resumes automatically next cycle.
