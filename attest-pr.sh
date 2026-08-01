@@ -64,10 +64,23 @@ BODY=$(jq -n --arg id "$ATT_ID" --arg agent "$AGENT_NAME" --arg model "$AGENT_MO
   --arg dh "$DIFF_HASH" --arg pk "$PAYLOAD_KEY" --arg cm "$COMMITMENT" \
   '{body: ("🛡️ **Rubric Attestation**\n\nThis PR was authored by `" + $agent + "` (" + $model + ") and its diff is sealed under a post-quantum attestation record anchored to Hedera.\n\n| | |\n|---|---|\n| Attestation ID | `" + $id + "` |\n| Diff SHA3-256 | `" + $dh + "` |\n| Payload commitment | `" + $cm + "` |\n| Payload key | `" + $pk + "` |\n\n_Record is independently verifiable at rubric-protocol.com/verify. Private repos: treat the payload key as sensitive._")}')
 
-curl -sS -X POST \
-  -H "Authorization: Bearer $GH_TOKEN" \
+EXISTING_ID=$(curl -sS -H "Authorization: Bearer $GH_TOKEN" \
   -H "Accept: application/vnd.github+json" \
-  "https://api.github.com/repos/$REPO/issues/$PR_NUMBER/comments" \
-  -d "$BODY" > /dev/null
+  "https://api.github.com/repos/$REPO/issues/$PR_NUMBER/comments?per_page=100" \
+  | jq -r '[.[] | select(.body | startswith("\ud83d\udee1\ufe0f **Rubric Attestation**"))] | first | .id // empty')
+
+if [ -n "$EXISTING_ID" ]; then
+  curl -sS -X PATCH \
+    -H "Authorization: Bearer $GH_TOKEN" \
+    -H "Accept: application/vnd.github+json" \
+    "https://api.github.com/repos/$REPO/issues/comments/$EXISTING_ID" \
+    -d "$BODY" > /dev/null
+else
+  curl -sS -X POST \
+    -H "Authorization: Bearer $GH_TOKEN" \
+    -H "Accept: application/vnd.github+json" \
+    "https://api.github.com/repos/$REPO/issues/$PR_NUMBER/comments" \
+    -d "$BODY" > /dev/null
+fi
 
 echo "Sealed PR #$PR_NUMBER → $ATT_ID"
