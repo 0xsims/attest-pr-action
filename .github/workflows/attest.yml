@@ -1,0 +1,21 @@
+name: Attest AI PRs
+on:
+  pull_request:
+    types: [opened, synchronize, labeled]
+jobs:
+  attest:
+    if: contains(github.event.pull_request.labels.*.name, 'ai-authored')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: 0xsims/attest-pr-action@v1
+        with:
+          rubric-api-key: ${{ secrets.RUBRIC_API_KEY }}
+          agent-name: 'claude-fable-5'
+          agent-model: 'claude-fable-5'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
